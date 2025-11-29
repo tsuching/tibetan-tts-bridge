@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from gradio_client import Client
 import asyncio
 import os
+from fastapi.responses import FileResponse
 
 app = FastAPI()
 
@@ -49,7 +50,8 @@ async def generate_tts(req: TTSRequest):
         else:
             url = raw_result  # Already a URL
 
-        return {"url": url}
+        #return {"url": url}
+        return FileResponse(url, media_type="audio/wav", filename="tts.wav")
 
     except Exception as e:
         print(f"Error from HF: {e}")
