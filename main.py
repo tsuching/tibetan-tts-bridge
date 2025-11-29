@@ -27,9 +27,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Prepare the client to your Space
-#client = Client("tsuching/Tibetan-tts")
-client = None
+# Initialize HF client **once** at module level
+client = Client("tsuching/Tibetan-tts")
 
 class TTSRequest(BaseModel):
     text: str
@@ -44,8 +43,11 @@ def generate_tts(req: TTSRequest):
         # Create client only when needed (lazy load)
         #client = Client("https://tsuching-tibetan-tts.hf.space/")
 
-        if client is None:
-            client = Client("tsuching/Tibetan-tts")
+        result = client.predict(req.text, api_name="/tts_tibetan")
+        print(f"HF raw result: {result}")  # Debug log
+
+        #if client is None:
+        #    client = Client("tsuching/Tibetan-tts")
 
 
         # Call the named API you confirmed: /tts_tibetan
@@ -54,14 +56,14 @@ def generate_tts(req: TTSRequest):
 
         if not result:
             # Retry once if empty
-            time.sleep(1)
+            time.sleep(2)
             result = client.predict(req.text, api_name="/tts_tibetan")
 
         if not result:
             return {"error": "HF Space returned no audio"}
 
         # 'result' is a hosted file URL like https://.../file=/tmp/gradio/output.wav
-        if isinstance(result, str) and result.startswith("/file="): #/"):
+        if isinstance(result, str) and result.startswith("/"):
             result = f"https://tsuching-tibetan-tts.hf.space{result}" #/file={result}"
 
         return {"url": result}
