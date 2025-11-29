@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from gradio_client import Client
 import asyncio
+import os
 
 app = FastAPI()
 
@@ -15,8 +16,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Initialize HF client once
-client = Client("tsuching/Tibetan-tts")
+# Initialize HF client once (point to your HF Space)
+SPACE_URL = "https://tsuching-tibetan-tts.hf.space"
+client = Client(SPACE_URL)
 
 class TTSRequest(BaseModel):
     text: str
@@ -29,18 +31,26 @@ def root():
 async def generate_tts(req: TTSRequest):
     print("Received request:", req.text)
     try:
-        # Run the blocking HF call in a background thread
-        raw_result = await asyncio.to_thread(client.predict, req.text, api_name="/tts_tibetan")
-        print(f"HF raw result: {raw_result}")  # debug log
+        # Run blocking HF call in a background thread
+        raw_result = await asyncio.to_thread(
+            client.predict, req.text, api_name="/tts_tibetan"
+        )
+        print(f"HF raw result: {raw_result}")
 
-        # Ensure the result is a URL
-        if raw_result.startswith("/private/"):
-            # Prepend HF Space URL if needed
-            raw_result = f"https://tsuching-tibetan-tts.hf.space/file={raw_result}"
+        if not raw_result:
+            return {"error": "HF Space returned no audio"}
 
-        return {"url": raw_result}
+        # Convert local path to hosted URL if needed
+        if os.path.isabs(raw_result) and raw_result.startswith("/private"):
+            # Grab just the filename
+            filename = os.path.basename(raw_result)
+            # Construct URL using Space URL
+            url = f"{SPACE_URL}/file={filename}"
+        else:
+            url = raw_result  # Already a URL
+
+        return {"url": url}
 
     except Exception as e:
         print(f"Error from HF: {e}")
         return {"error": f"HF call failed: {str(e)}"}
-
