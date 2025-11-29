@@ -41,9 +41,16 @@ def generate_tts(req: TTSRequest):
         client = Client("https://tsuching-tibetan-tts.hf.space/")
         # Call the named API you confirmed: /tts_tibetan
         result = client.predict(req.text, api_name="/tts_tibetan")
+        print(f"HF raw result: {result}")  # Debug log
+
+        if not result:
+            return {"error": "HF Space returned no result (possibly asleep or misconfigured)"}
+
         # 'result' is a hosted file URL like https://.../file=/tmp/gradio/output.wav
         if isinstance(result, str) and result.startswith("/"):
             result = f"https://tsuching-tibetan-tts.hf.space/file={result}"
+
         return {"url": result}
     except Exception as e:
+        print(f"Error from HF: {e}")
         return {"error": f"HF call failed: {str(e)}"}
