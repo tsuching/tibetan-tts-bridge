@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from gradio_client import Client
 import requests
 import time
+import asyncio
 
 # Initialize FastAPI
 app = FastAPI()
