@@ -25,7 +25,7 @@ app.add_middleware(
 
 # Prepare the client to your Space
 #client = Client("tsuching/Tibetan-tts")
-client = Client("https://tsuching-tibetan-tts.hf.space/")
+
 
 class TTSRequest(BaseModel):
     text: str
@@ -37,10 +37,12 @@ def root():
 @app.post("/tts")
 def generate_tts(req: TTSRequest):
     try:
+        # Create client only when needed (lazy load)
+        client = Client("https://tsuching-tibetan-tts.hf.space/")
         # Call the named API you confirmed: /tts_tibetan
         result = client.predict(req.text, api_name="/tts_tibetan")
         # 'result' is a hosted file URL like https://.../file=/tmp/gradio/output.wav
         return {"url": result}
     except Exception as e:
         # Graceful error back to Flutter
-        return {"error": str(e)}
+        return {"error": f"Failed to generate TTS: {str(e)}"}
