@@ -42,7 +42,8 @@ def generate_tts(req: TTSRequest):
         # Call the named API you confirmed: /tts_tibetan
         result = client.predict(req.text, api_name="/tts_tibetan")
         # 'result' is a hosted file URL like https://.../file=/tmp/gradio/output.wav
+        if isinstance(result, str) and result.startswith("/"):
+            result = f"https://tsuching-tibetan-tts.hf.space/file={result}"
         return {"url": result}
     except Exception as e:
-        # Graceful error back to Flutter
-        return {"error": f"Failed to generate TTS: {str(e)}"}
+        return {"error": f"HF call failed: {str(e)}"}
