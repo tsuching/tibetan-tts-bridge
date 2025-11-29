@@ -48,7 +48,7 @@ def generate_tts(req: TTSRequest):
             # Retry once if empty
             result = client.predict(req.text, api_name="/tts_tibetan")
         if not result:
-            return {"error": "HF Space returned no result (possibly asleep or misconfigured)"}
+            return {"error": "HF Space returned no audio"}
 
         # 'result' is a hosted file URL like https://.../file=/tmp/gradio/output.wav
         if isinstance(result, str) and result.startswith("/"):
