@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from gradio_client import Client
 import requests
+import time
 
 # Initialize FastAPI
 app = FastAPI()
@@ -46,6 +47,7 @@ def generate_tts(req: TTSRequest):
 
         if not result:
             # Retry once if empty
+            time.sleep(2)
             result = client.predict(req.text, api_name="/tts_tibetan")
         if not result:
             return {"error": "HF Space returned no audio"}
