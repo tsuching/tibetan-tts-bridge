@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from gradio_client import Client
+import requests
 
 # Initialize FastAPI
 app = FastAPI()
@@ -37,20 +38,34 @@ def root():
 @app.post("/tts")
 def generate_tts(req: TTSRequest):
     try:
+        response = requests.post(
+            "https://tsuching-tibetan-tts.hf.space/run/predict",
+            json={"data":[req.text]},
+            timeout=60
+        )
+        print(f"HF raw response: {response.text}")
+        result = response.json()
+        
+        if "data" in result and result["data"]:
+            file_path = result["data"][0]
+            url = f"https://tsuching-tibetan-tts.hf.space/file={file_path}"
+            return {"url": url}
+        return {"error": "HF returned no audio"}
+        
         # Create client only when needed (lazy load)
-        client = Client("https://tsuching-tibetan-tts.hf.space/")
+        #client = Client("https://tsuching-tibetan-tts.hf.space/")
         # Call the named API you confirmed: /tts_tibetan
-        result = client.predict(req.text, api_name="/tts_tibetan")
-        print(f"HF raw result: {result}")  # Debug log
+        #result = client.predict(req.text, api_name="/tts_tibetan")
+        #print(f"HF raw result: {result}")  # Debug log
 
-        if not result:
-            return {"error": "HF Space returned no result (possibly asleep or misconfigured)"}
+        #if not result:
+        #    return {"error": "HF Space returned no result (possibly asleep or misconfigured)"}
 
         # 'result' is a hosted file URL like https://.../file=/tmp/gradio/output.wav
-        if isinstance(result, str) and result.startswith("/"):
-            result = f"https://tsuching-tibetan-tts.hf.space/file={result}"
+        #if isinstance(result, str) and result.startswith("/"):
+        #    result = f"https://tsuching-tibetan-tts.hf.space/file={result}"
 
-        return {"url": result}
+        #return {"url": result}
     except Exception as e:
         print(f"Error from HF: {e}")
         return {"error": f"HF call failed: {str(e)}"}
