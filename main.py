@@ -24,7 +24,8 @@ app.add_middleware(
 )
 
 # Prepare the client to your Space
-client = Client("tsuching/Tibetan-tts")
+#client = Client("tsuching/Tibetan-tts")
+client = Client("https://tsuching-tibetan-tts.hf.space/")
 
 class TTSRequest(BaseModel):
     text: str
