@@ -33,9 +33,12 @@ async def generate_tts(req: TTSRequest):
         raw_result = await asyncio.to_thread(client.predict, req.text, api_name="/tts_tibetan")
         print(f"HF raw result: {raw_result}")  # debug log
 
-        # The gradio_client now returns a public URL
-        url = raw_result
-        return {"url": url}
+        # Ensure the result is a URL
+        if raw_result.startswith("/private/"):
+            # Prepend HF Space URL if needed
+            raw_result = f"https://tsuching-tibetan-tts.hf.space/file={raw_result}"
+
+        return {"url": raw_result}
 
     except Exception as e:
         print(f"Error from HF: {e}")
