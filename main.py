@@ -28,18 +28,16 @@ def root():
 @app.post("/tts")
 async def generate_tts(req: TTSRequest):
     print("Received request:", req.text)
-
     try:
-        # Run blocking HF call in background
-        result = await asyncio.to_thread(client.predict, req.text, api_name="/tts_tibetan")
-        print("HF raw result:", result)
+        # Run the blocking HF call in a background thread
+        raw_result = await asyncio.to_thread(client.predict, req.text, api_name="/tts_tibetan")
+        print(f"HF raw result: {raw_result}")  # debug log
 
-        # Ensure we return a public URL
-        if isinstance(result, str) and result.startswith("/private"):
-            # Prepend the Space URL if Gradio returns a local path
-            result = f"https://tsuching-tibetan-tts.hf.space/file={result}"
+        # The gradio_client now returns a public URL
+        url = raw_result
+        return {"url": url}
 
-        return {"url": result}
     except Exception as e:
-        print("Error from HF:", e)
+        print(f"Error from HF: {e}")
         return {"error": f"HF call failed: {str(e)}"}
+
