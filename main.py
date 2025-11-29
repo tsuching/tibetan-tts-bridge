@@ -40,14 +40,16 @@ def root():
 
 @app.post("/tts")
 async def generate_tts(req: TTSRequest):
-    result = await asyncio.to_thread(client.predict, req.text, api_name="/tts_tibetan")
     print("Received request:", req.text)
 
-    try:        
+    try:       
+        # Run the blocking HF call in a background thread
+        result = await asyncio.to_thread(client.predict, req.text, api_name="/tts_tibetan") 
+        
         # Create client only when needed (lazy load)
         #client = Client("https://tsuching-tibetan-tts.hf.space/")
 
-        result = client.predict(req.text, api_name="/tts_tibetan")
+        #result = client.predict(req.text, api_name="/tts_tibetan")
         print(f"HF raw result: {result}")  # Debug log
 
         #if client is None:
@@ -55,20 +57,20 @@ async def generate_tts(req: TTSRequest):
 
 
         # Call the named API you confirmed: /tts_tibetan
-        result = client.predict(req.text, api_name="/tts_tibetan")
-        print(f"HF raw result: {result}")  # Debug log
+        #result = client.predict(req.text, api_name="/tts_tibetan")
+        #print(f"HF raw result: {result}")  # Debug log
 
-        if not result:
+        #if not result:
             # Retry once if empty
-            time.sleep(2)
-            result = client.predict(req.text, api_name="/tts_tibetan")
+        #    time.sleep(2)
+        #    result = client.predict(req.text, api_name="/tts_tibetan")
 
         if not result:
             return {"error": "HF Space returned no audio"}
 
         # 'result' is a hosted file URL like https://.../file=/tmp/gradio/output.wav
-        if isinstance(result, str) and result.startswith("/"):
-            result = f"https://tsuching-tibetan-tts.hf.space{result}" #/file={result}"
+        #if isinstance(result, str) and result.startswith("/"):
+        #    result = f"https://tsuching-tibetan-tts.hf.space{result}" #/file={result}"
 
         return {"url": result}
     except Exception as e:
