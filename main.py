@@ -38,7 +38,10 @@ def root():
     return {"status": "ok", "message": "Tibetan TTS bridge is running."}
 
 @app.post("/tts")
-def generate_tts(req: TTSRequest):
+async def generate_tts(req: TTSRequest):
+    result = await asyncio.to_thread(client.predict, req.text, api_name="/tts_tibetan")
+    print("Received request:", req.text)
+
     try:        
         # Create client only when needed (lazy load)
         #client = Client("https://tsuching-tibetan-tts.hf.space/")
