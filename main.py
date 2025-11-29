@@ -16,18 +16,20 @@ origins = [
     "http://127.0.0.1:3000",
     "http://127.0.0.1:4000",
     # Add your deployed Flutter Web domain here when you have it
+    "*",   # ← Optional: enable if Render blocks you
 ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],  # ← For testing, allow all origins. Change this in production.
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # Prepare the client to your Space
 #client = Client("tsuching/Tibetan-tts")
-
+client = None
 
 class TTSRequest(BaseModel):
     text: str
@@ -40,21 +42,27 @@ def root():
 def generate_tts(req: TTSRequest):
     try:        
         # Create client only when needed (lazy load)
-        client = Client("https://tsuching-tibetan-tts.hf.space/")
+        #client = Client("https://tsuching-tibetan-tts.hf.space/")
+
+        if client is None:
+            client = Client("tsuching/Tibetan-tts")
+
+
         # Call the named API you confirmed: /tts_tibetan
         result = client.predict(req.text, api_name="/tts_tibetan")
         print(f"HF raw result: {result}")  # Debug log
 
         if not result:
             # Retry once if empty
-            time.sleep(2)
+            time.sleep(1)
             result = client.predict(req.text, api_name="/tts_tibetan")
+
         if not result:
             return {"error": "HF Space returned no audio"}
 
         # 'result' is a hosted file URL like https://.../file=/tmp/gradio/output.wav
-        if isinstance(result, str) and result.startswith("/"):
-            result = f"https://tsuching-tibetan-tts.hf.space/file={result}"
+        if isinstance(result, str) and result.startswith("/file="): #/"):
+            result = f"https://tsuching-tibetan-tts.hf.space{result}" #/file={result}"
 
         return {"url": result}
     except Exception as e:
