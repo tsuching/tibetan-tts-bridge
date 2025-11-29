@@ -29,7 +29,9 @@ app.add_middleware(
 )
 
 # Initialize HF client **once** at module level
-client = Client("tsuching/Tibetan-tts")
+#client = Client("tsuching/Tibetan-tts")
+client = Client("https://tsuching-tibetan-tts.hf.space/")
+
 
 class TTSRequest(BaseModel):
     text: str
